@@ -160,6 +160,13 @@ class Aliens(pygame.sprite.Sprite):
             self.wall = False
         elif self.s <= 0:
             self.wall = True
+        if pygame.sprite.spritecollide(self, player_group, False):
+            LIFE -= 1
+            if LIFE == 0:
+                pygame.sprite.spritecollide(self, player_group, True)
+
+    def down(self):
+        self.rect.y += 35
 
 
 class Alien1(Aliens):
@@ -220,7 +227,7 @@ class PlayerBullet(pygame.sprite.Sprite):
         self.rect.y = pos_y
 
     def update(self):
-        self.rect.y -= 10
+        self.rect.y -= 7
         if pygame.sprite.spritecollide(self, aliens_group, True):
             self.kill()
         if self.rect.y <= -6:
@@ -233,7 +240,7 @@ class AliensBullet(pygame.sprite.Sprite):
 
     def update(self):
         global LIFE
-        self.rect.y += 10
+        self.rect.y += 7
         if pygame.sprite.spritecollide(self, player_group, False):
             self.kill()
             LIFE -= 1
@@ -270,9 +277,9 @@ class Bullet3(AliensBullet):
         self.rect.y = pos_y
 
 
-while True:
+start_screen()
 
-    start_screen()
+while True:
 
     LIFE = 3
 
@@ -287,7 +294,9 @@ while True:
 
     running = True
     BANG = 30
-    pygame.time.set_timer(BANG, 1500)
+    DOWN = 25
+    pygame.time.set_timer(BANG, 1200)
+    pygame.time.set_timer(DOWN, 7500)
     life = {1: load_image('1.png'),
             2: load_image('2.png'),
             3: load_image('3.png')}
@@ -297,6 +306,7 @@ while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                terminate()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     player.rect.x -= STEP
@@ -311,6 +321,9 @@ while True:
                         PlayerBullet(player.rect.x + 13, player.rect.y + 8)
             elif event.type == BANG:
                 random.choice(aliens_group.sprites()).bang()
+            elif event.type == DOWN:
+                for i in aliens_group.sprites():
+                    i.down()
 
         screen.blit(load_image('fon.jpg'), (0, 0))
         screen.blit(life[LIFE], (0, 250))
