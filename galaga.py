@@ -278,16 +278,16 @@ while True:
 
     player = Player(WIDTH // 2 - 15, HEIGHT - 40)
 
-    for i in range(0, WIDTH // 35 * 35, 35):
-        Alien3(i, 0, 3, 30)
-    for i in range(10, WIDTH // 35 * 35 + 10, 35):
-        Alien2(i, 35, 2, 25)
-    for i in range(5, WIDTH // 35 * 35 + 5, 35):
-        Alien1(i, 70, 1, 30)
+    for i in range(0, (WIDTH // 35 - 1) * 35, 35):
+        Alien3(i, 0, 3, 60)
+    for i in range(10, (WIDTH // 35 - 1) * 35 + 10, 35):
+        Alien2(i, 35, 2, 55)
+    for i in range(5, (WIDTH // 35 - 1) * 35 + 5, 35):
+        Alien1(i, 70, 1, 60)
 
     running = True
     BANG = 30
-    pygame.time.set_timer(BANG, 1800)
+    pygame.time.set_timer(BANG, 1500)
     life = {1: load_image('1.png'),
             2: load_image('2.png'),
             3: load_image('3.png')}
@@ -307,7 +307,7 @@ while True:
                     if player.rect.x >= WIDTH:
                         player.rect.x = STEP - 30
                 if event.key == pygame.K_SPACE:
-                    if len(player_bullets.sprites()) < 3:
+                    if len(player_bullets.sprites()) < 2:
                         PlayerBullet(player.rect.x + 13, player.rect.y + 8)
             elif event.type == BANG:
                 random.choice(aliens_group.sprites()).bang()
