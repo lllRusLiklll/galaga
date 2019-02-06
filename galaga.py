@@ -24,6 +24,7 @@ aliens1 = pygame.sprite.Group()
 aliens2 = pygame.sprite.Group()
 aliens3 = pygame.sprite.Group()
 bullets = pygame.sprite.Group()
+player_bullets = pygame.sprite.Group()
 
 
 def load_image(name, color_key=None):
@@ -48,16 +49,91 @@ def terminate():
 
 
 def start_screen():
-    fon = load_image('fon.jpg')
-    screen.blit(fon, (0, 0))
+    start = load_image('start.jpg')
+    screen.blit(start, (0, 0))
     font = pygame.font.SysFont('Arial', 25)
+
+    start_rendered = font.render('Start', 1, pygame.Color('green'))
+    start_rect = start_rendered.get_rect()
+    start_rect.top = 400
+    start_rect.x = 100
+    screen.blit(start_rendered, start_rect)
+
+    quit_rendered = font.render('Quit', 1, pygame.Color('green'))
+    quit_rect = quit_rendered.get_rect()
+    quit_rect.top = 400
+    quit_rect.x = 360
+    screen.blit(quit_rendered, quit_rect)
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                return  # начинаем игру
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if start_rect.collidepoint(event.pos):
+                    return
+                elif quit_rect.collidepoint(event.pos):
+                    terminate()
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def game_over_screen():
+    game_over = load_image('game_over.jpg')
+    screen.blit(game_over, (0, 0))
+    font = pygame.font.SysFont('Arial', 25)
+
+    restart_rendered = font.render('Restart', 1, pygame.Color('green'))
+    restart_rect = restart_rendered.get_rect()
+    restart_rect.top = 400
+    restart_rect.x = 100
+    screen.blit(restart_rendered, restart_rect)
+
+    quit_rendered = font.render('Quit', 1, pygame.Color('green'))
+    quit_rect = quit_rendered.get_rect()
+    quit_rect.top = 400
+    quit_rect.x = 360
+    screen.blit(quit_rendered, quit_rect)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if restart_rect.collidepoint(event.pos):
+                    return True
+                elif quit_rect.collidepoint(event.pos):
+                    terminate()
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def win_screen():
+    win = load_image('win.jpg')
+    screen.blit(win, (0, 0))
+    font = pygame.font.SysFont('Arial', 25)
+
+    restart_rendered = font.render('Restart', 1, pygame.Color('green'))
+    restart_rect = restart_rendered.get_rect()
+    restart_rect.top = 400
+    restart_rect.x = 100
+    screen.blit(restart_rendered, restart_rect)
+
+    quit_rendered = font.render('Quit', 1, pygame.Color('green'))
+    quit_rect = quit_rendered.get_rect()
+    quit_rect.top = 400
+    quit_rect.x = 360
+    screen.blit(quit_rendered, quit_rect)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if restart_rect.collidepoint(event.pos):
+                    return True
+                elif quit_rect.collidepoint(event.pos):
+                    terminate()
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -137,6 +213,7 @@ class Player(pygame.sprite.Sprite):
 class PlayerBullet(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(bullets, all_sprites)
+        self.add(player_bullets)
         self.image = load_image('plr_bullet.png')
         self.rect = self.image.get_rect()
         self.rect.x = pos_x
@@ -193,53 +270,67 @@ class Bullet3(AliensBullet):
         self.rect.y = pos_y
 
 
-start_screen()
+while True:
 
-player = Player(WIDTH // 2 - 15, HEIGHT - 40)
+    start_screen()
 
-for i in range(0, WIDTH // 35 * 35, 35):
-    Alien3(i, 0, 3, 30)
-for i in range(10, WIDTH // 35 * 35 + 10, 35):
-    Alien2(i, 35, 2, 25)
-for i in range(5, WIDTH // 35 * 35 + 5, 35):
-    Alien1(i, 70, 1, 30)
+    LIFE = 3
 
-running = True
-BANG = 30
-pygame.time.set_timer(BANG, 1800)
+    player = Player(WIDTH // 2 - 15, HEIGHT - 40)
 
-while running:
+    for i in range(0, WIDTH // 35 * 35, 35):
+        Alien3(i, 0, 3, 30)
+    for i in range(10, WIDTH // 35 * 35 + 10, 35):
+        Alien2(i, 35, 2, 25)
+    for i in range(5, WIDTH // 35 * 35 + 5, 35):
+        Alien1(i, 70, 1, 30)
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                player.rect.x -= STEP
-                if player.rect.x <= -30:
-                    player.rect.x = WIDTH - STEP
-            if event.key == pygame.K_RIGHT:
-                player.rect.x += STEP
-                if player.rect.x >= WIDTH:
-                    player.rect.x = STEP - 30
-            if event.key == pygame.K_SPACE:
-                PlayerBullet(player.rect.x + 13, player.rect.y + 8)
-        elif event.type == BANG:
-            random.choice(aliens_group.sprites()).bang()
+    running = True
+    BANG = 30
+    pygame.time.set_timer(BANG, 1800)
+    life = {1: load_image('1.png'),
+            2: load_image('2.png'),
+            3: load_image('3.png')}
 
-    screen.fill(pygame.Color(0, 0, 0))
+    while running:
 
-    aliens_group.draw(screen)
-    aliens_group.update()
-    player_group.draw(screen)
-    bullets.draw(screen)
-    bullets.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    player.rect.x -= STEP
+                    if player.rect.x <= -30:
+                        player.rect.x = WIDTH - STEP
+                if event.key == pygame.K_RIGHT:
+                    player.rect.x += STEP
+                    if player.rect.x >= WIDTH:
+                        player.rect.x = STEP - 30
+                if event.key == pygame.K_SPACE:
+                    if len(player_bullets.sprites()) < 3:
+                        PlayerBullet(player.rect.x + 13, player.rect.y + 8)
+            elif event.type == BANG:
+                random.choice(aliens_group.sprites()).bang()
 
-    pygame.display.flip()
+        screen.blit(load_image('fon.jpg'), (0, 0))
+        screen.blit(life[LIFE], (0, 250))
 
-    if len(aliens_group.sprites()) == 0:
-        terminate()
+        aliens_group.draw(screen)
+        aliens_group.update()
+        player_group.draw(screen)
+        bullets.draw(screen)
+        bullets.update()
 
-    clock.tick(FPS)
+        pygame.display.flip()
 
-terminate()
+        if len(player_group.sprites()) == 0:
+            if game_over_screen():
+                break
+        if len(aliens_group.sprites()) == 0:
+            if win_screen():
+                break
+
+        clock.tick(FPS)
+
+    for i in all_sprites.sprites():
+        i.kill()
