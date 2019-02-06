@@ -2,14 +2,16 @@ import os
 import sys
 import pygame
 import time
+import random
 
 pygame.init()
 pygame.key.set_repeat(200, 70)
 
 FPS = 30
 WIDTH = 520
-HEIGHT = 700
+HEIGHT = 600
 STEP = 10
+LIFE = 3
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
@@ -38,34 +40,6 @@ def load_image(name, color_key=None):
             color_key = image.get_at((0, 0))
         image.set_colorkey(color_key)
     return image
-
-
-'''def load_level(filename):
-    filename = "data/" + filename
-    # читаем уровень, убирая символы перевода строки
-    with open(filename, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
-
-    # и подсчитываем максимальную длину    
-    max_width = max(map(len, level_map))
-
-    # дополняем каждую строку пустыми клетками ('.')    
-    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
-
-
-def generate_level(level):
-    new_player, x, y = None, None, None
-    for y in range(len(level)):
-        for x in range(len(level[y])):
-            if level[y][x] == '.':
-                Tile('empty', x, y)
-            elif level[y][x] == '#':
-                Tile('wall', x, y)
-            elif level[y][x] == '@':
-                Tile('empty', x, y)
-                new_player = Player(x, y)
-    # вернем игрока, а также размер поля в клетках            
-    return new_player, x, y'''
 
 
 def terminate():
@@ -102,9 +76,6 @@ def start_screen():
         clock.tick(FPS)
 
 
-aliens = {'alien1': load_image('alien1.png'), 
-          'alien2': load_image('alien2.png'), 
-          'alien3': load_image('alien3.png')}
 player_image = load_image('player.png')
 
 
@@ -132,28 +103,40 @@ class Aliens(pygame.sprite.Sprite):
 class Alien1(Aliens):
     def __init__(self, pos_x, pos_y, vx, s):
         super().__init__(vx, s)
+        self.add(aliens1)
         self.image = load_image('alien1.png')
         self.rect = self.image.get_rect()
         self.rect.x = pos_x
         self.rect.y = pos_y
+
+    def bang(self):
+        Bullet1(self.rect.x, self.rect.y + 33)
         
         
 class Alien2(Aliens):
     def __init__(self, pos_x, pos_y, vx, s):
         super().__init__(vx, s)
+        self.add(aliens2)
         self.image = load_image('alien2.png')
         self.rect = self.image.get_rect()
         self.rect.x = pos_x
         self.rect.y = pos_y
+
+    def bang(self):
+        Bullet2(self.rect.x, self.rect.y + 33)
         
         
 class Alien3(Aliens):
     def __init__(self, pos_x, pos_y, vx, s):
         super().__init__(vx, s)
+        self.add(aliens3)
         self.image = load_image('alien3.png')
         self.rect = self.image.get_rect()
         self.rect.x = pos_x
         self.rect.y = pos_y
+
+    def bang(self):
+        Bullet3(self.rect.x, self.rect.y + 33)
 
 
 class Player(pygame.sprite.Sprite):
@@ -165,7 +148,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.y = pos_y
 
 
-class Bullet(pygame.sprite.Sprite):
+class PlayerBullet(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(bullets, all_sprites)
         self.image = load_image('plr_bullet.png')
@@ -177,6 +160,51 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y -= 10
         if pygame.sprite.spritecollide(self, aliens_group, True):
             self.kill()
+        if self.rect.y <= -6:
+            self.kill()
+
+
+class AliensBullet(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(bullets, all_sprites)
+
+    def update(self):
+        global LIFE
+        self.rect.y += 10
+        if pygame.sprite.spritecollide(self, player_group, False):
+            self.kill()
+            LIFE -= 1
+            if LIFE == 0:
+                pygame.sprite.spritecollide(self, player_group, True)
+        if self.rect.y >= HEIGHT + 6:
+            self.kill()
+
+
+class Bullet1(AliensBullet):
+    def __init__(self, pos_x, pos_y):
+        super().__init__()
+        self.image = load_image('bullet1.png')
+        self.rect = self.image.get_rect()
+        self.rect.x = pos_x
+        self.rect.y = pos_y
+
+
+class Bullet2(AliensBullet):
+    def __init__(self, pos_x, pos_y):
+        super().__init__()
+        self.image = load_image('bullet2.png')
+        self.rect = self.image.get_rect()
+        self.rect.x = pos_x
+        self.rect.y = pos_y
+
+
+class Bullet3(AliensBullet):
+    def __init__(self, pos_x, pos_y):
+        super().__init__()
+        self.image = load_image('bullet3.png')
+        self.rect = self.image.get_rect()
+        self.rect.x = pos_x
+        self.rect.y = pos_y
 
 
 start_screen()
@@ -191,6 +219,8 @@ for i in range(5, WIDTH // 35 * 35 + 5, 35):
     Alien1(i, 70, 1, 30)
 
 running = True
+BANG = 30
+pygame.time.set_timer(BANG, 1800)
 
 while running:
 
@@ -207,9 +237,12 @@ while running:
                 if player.rect.x >= WIDTH:
                     player.rect.x = STEP - 30
             if event.key == pygame.K_SPACE:
-                Bullet(player.rect.x + 13, player.rect.y + 8)
+                PlayerBullet(player.rect.x + 13, player.rect.y + 8)
+        elif event.type == BANG:
+            random.choice(aliens_group.sprites()).bang()
 
     screen.fill(pygame.Color(0, 0, 0))
+
     aliens_group.draw(screen)
     aliens_group.update()
     player_group.draw(screen)
