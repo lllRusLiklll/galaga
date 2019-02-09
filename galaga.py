@@ -207,6 +207,7 @@ class Aliens(pygame.sprite.Sprite):
         self.wall = False
         
     def update(self):
+        global LIFE
         if self.wall:
             self.s += self.vx
             self.rect.x -= self.vx
