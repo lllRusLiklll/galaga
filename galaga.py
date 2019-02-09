@@ -5,6 +5,7 @@ import time
 import random
 
 pygame.init()
+pygame.display.set_mode((200, 100))
 pygame.key.set_repeat(200, 70)
 
 FPS = 30
@@ -43,12 +44,19 @@ def load_image(name, color_key=None):
     return image
 
 
+def load_music(name):
+    fullname = os.path.join('sound', name)
+    sound = pygame.mixer.Sound(fullname)
+    return sound
+
+
 def terminate():
     pygame.quit()
     sys.exit()
 
 
 def start_screen():
+    start_theme.play()
     start = load_image('start.jpg')
     screen.blit(start, (0, 0))
     font = pygame.font.SysFont('Arial', 25)
@@ -71,6 +79,7 @@ def start_screen():
                 terminate()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if start_rect.collidepoint(event.pos):
+                    start_theme.stop()
                     return
                 elif quit_rect.collidepoint(event.pos):
                     terminate()
@@ -78,7 +87,52 @@ def start_screen():
         clock.tick(FPS)
 
 
+def pause():
+    end_theme.play()
+
+    pause = load_image('pause.png')
+    screen.blit(pause, (0, 0))
+    font = pygame.font.SysFont('Arial', 25)
+
+    resume_rendered = font.render('Resume', 1, pygame.Color('green'))
+    resume_rect = resume_rendered.get_rect()
+    resume_rect.top = 400
+    resume_rect.x = 75
+    screen.blit(resume_rendered, resume_rect)
+
+    restart_rendered = font.render('Restart', 1, pygame.Color('green'))
+    restart_rect = restart_rendered.get_rect()
+    restart_rect.top = 400
+    restart_rect.x = 230
+    screen.blit(restart_rendered, restart_rect)
+
+    quit_rendered = font.render('Quit', 1, pygame.Color('green'))
+    quit_rect = quit_rendered.get_rect()
+    quit_rect.top = 400
+    quit_rect.x = 400
+    screen.blit(quit_rendered, quit_rect)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if restart_rect.collidepoint(event.pos):
+                    end_theme.stop()
+                    return True
+                elif quit_rect.collidepoint(event.pos):
+                    terminate()
+                elif resume_rect.collidepoint(event.pos):
+                    end_theme.stop()
+                    return
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+
 def game_over_screen():
+    end_theme.play()
+
     game_over = load_image('game_over.jpg')
     screen.blit(game_over, (0, 0))
     font = pygame.font.SysFont('Arial', 25)
@@ -101,6 +155,7 @@ def game_over_screen():
                 terminate()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if restart_rect.collidepoint(event.pos):
+                    end_theme.stop()
                     return True
                 elif quit_rect.collidepoint(event.pos):
                     terminate()
@@ -109,6 +164,8 @@ def game_over_screen():
 
 
 def win_screen():
+    end_theme.play()
+
     win = load_image('win.jpg')
     screen.blit(win, (0, 0))
     font = pygame.font.SysFont('Arial', 25)
@@ -131,6 +188,7 @@ def win_screen():
                 terminate()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if restart_rect.collidepoint(event.pos):
+                    end_theme.stop()
                     return True
                 elif quit_rect.collidepoint(event.pos):
                     terminate()
@@ -230,6 +288,7 @@ class PlayerBullet(pygame.sprite.Sprite):
         self.rect.y -= 7
         if pygame.sprite.spritecollide(self, aliens_group, True):
             self.kill()
+            kill.play()
         if self.rect.y <= -6:
             self.kill()
 
@@ -277,12 +336,22 @@ class Bullet3(AliensBullet):
         self.rect.y = pos_y
 
 
-start_screen()
+life = {1: load_image('1.png'),
+        2: load_image('2.png'),
+        3: load_image('3.png')}
+
+start_theme = load_music('start.wav')
+end_theme = load_music('end.wav')
+kill = load_music('kill.wav')
+fire = load_music('fire.wav')
+level = load_music('level.wav')
 
 while True:
+    start_screen()
 
+    level.play()
     LIFE = 3
-
+    PAUSE = False
     player = Player(WIDTH // 2 - 15, HEIGHT - 40)
 
     for i in range(0, (WIDTH // 35 - 1) * 35, 35):
@@ -295,11 +364,8 @@ while True:
     running = True
     BANG = 30
     DOWN = 25
-    pygame.time.set_timer(BANG, 1200)
+    pygame.time.set_timer(BANG, 1500)
     pygame.time.set_timer(DOWN, 7500)
-    life = {1: load_image('1.png'),
-            2: load_image('2.png'),
-            3: load_image('3.png')}
 
     while running:
 
@@ -319,8 +385,13 @@ while True:
                 if event.key == pygame.K_SPACE:
                     if len(player_bullets.sprites()) < 2:
                         PlayerBullet(player.rect.x + 13, player.rect.y + 8)
+                        fire.play()
+                if event.key == pygame.K_ESCAPE:
+                    if pause():
+                        PAUSE = True
             elif event.type == BANG:
                 random.choice(aliens_group.sprites()).bang()
+                fire.play()
             elif event.type == DOWN:
                 for i in aliens_group.sprites():
                     i.down()
@@ -342,6 +413,8 @@ while True:
         if len(aliens_group.sprites()) == 0:
             if win_screen():
                 break
+        if PAUSE:
+            break
 
         clock.tick(FPS)
 
