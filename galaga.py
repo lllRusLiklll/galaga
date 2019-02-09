@@ -12,7 +12,7 @@ FPS = 30
 WIDTH = 520
 HEIGHT = 600
 STEP = 10
-LIFE = 3
+LEVEL = 1
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
@@ -129,7 +129,6 @@ def pause():
         clock.tick(FPS)
 
 
-
 def game_over_screen():
     end_theme.play()
 
@@ -222,6 +221,10 @@ class Aliens(pygame.sprite.Sprite):
             LIFE -= 1
             if LIFE == 0:
                 pygame.sprite.spritecollide(self, player_group, True)
+        if self.rect.y >= HEIGHT:
+            if LIFE > 0:
+                LIFE -= 1
+            self.kill()
 
     def down(self):
         self.rect.y += 35
@@ -347,25 +350,49 @@ fire = load_music('fire.wav')
 level = load_music('level.wav')
 
 while True:
-    start_screen()
+    if LEVEL == 1:
+        start_screen()
 
     level.play()
     LIFE = 3
     PAUSE = False
-    player = Player(WIDTH // 2 - 15, HEIGHT - 40)
-
-    for i in range(0, (WIDTH // 35 - 1) * 35, 35):
-        Alien3(i, 0, 3, 60)
-    for i in range(10, (WIDTH // 35 - 1) * 35 + 10, 35):
-        Alien2(i, 35, 2, 55)
-    for i in range(5, (WIDTH // 35 - 1) * 35 + 5, 35):
-        Alien1(i, 70, 1, 60)
-
-    running = True
     BANG = 30
     DOWN = 25
-    pygame.time.set_timer(BANG, 1500)
-    pygame.time.set_timer(DOWN, 7500)
+    player = Player(WIDTH // 2 - 15, HEIGHT - 40)
+
+    if LEVEL == 1:
+        for i in range(0, (WIDTH // 35 - 1) * 35, 35):
+            Alien3(i, 0, 3, 60)
+        for i in range(10, (WIDTH // 35 - 1) * 35 + 10, 35):
+            Alien2(i, 35, 2, 55)
+        for i in range(5, (WIDTH // 35 - 1) * 35 + 5, 35):
+            Alien1(i, 70, 1, 60)
+
+        AMMO = 2
+
+        pygame.time.set_timer(BANG, 1500)
+        pygame.time.set_timer(DOWN, 7500)
+
+    elif LEVEL == 2:
+        for i in range(0, (WIDTH // 35 - 1) * 35, 35):
+            Alien3(i, 0, 3, 60)
+        for i in range(10, (WIDTH // 35 - 1) * 35 + 10, 35):
+            Alien3(i, 35, 3, 55)
+        for i in range(5, (WIDTH // 35 - 1) * 35 + 5, 35):
+            Alien2(i, 70, 2, 55)
+        for i in range(10, (WIDTH // 35 - 1) * 35 + 10, 35):
+            Alien2(i, 105, 1, 55)
+        for i in range(0, (WIDTH // 35 - 1) * 35, 35):
+            Alien1(i, 140, 2, 60)
+        for i in range(5, (WIDTH // 35 - 1) * 35 + 5, 35):
+            Alien1(i, 175, 1, 60)
+
+        AMMO = 3
+
+        pygame.time.set_timer(BANG, 1000)
+        pygame.time.set_timer(DOWN, 7000)
+
+    running = True
 
     while running:
 
@@ -383,7 +410,7 @@ while True:
                     if player.rect.x >= WIDTH:
                         player.rect.x = STEP - 30
                 if event.key == pygame.K_SPACE:
-                    if len(player_bullets.sprites()) < 2:
+                    if len(player_bullets.sprites()) < AMMO:
                         PlayerBullet(player.rect.x + 13, player.rect.y + 8)
                         fire.play()
                 if event.key == pygame.K_ESCAPE:
@@ -408,11 +435,16 @@ while True:
         pygame.display.flip()
 
         if len(player_group.sprites()) == 0:
+            LEVEL = 1
             if game_over_screen():
                 break
         if len(aliens_group.sprites()) == 0:
-            if win_screen():
+            if LEVEL == 1:
+                LEVEL += 1
                 break
+            else:
+                if win_screen():
+                    break
         if PAUSE:
             break
 
